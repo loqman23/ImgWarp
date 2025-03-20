@@ -5,7 +5,21 @@ async function loadImages() {
   try {
     // Get list of files in the img directory
     const response = await fetch('/api/images');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const images = await response.json();
+    
+    if (images.error) {
+      throw new Error(images.error);
+    }
+    
+    if (images.length === 0) {
+      gallery.innerHTML = '<p>No images found. Please add some images to the img folder.</p>';
+      return;
+    }
     
     images.forEach(image => {
       const imageUrl = `/img/${image}`;
@@ -20,6 +34,12 @@ async function loadImages() {
       img.alt = image;
       img.loading = 'lazy';
       
+      // Add error handling for images
+      img.onerror = () => {
+        img.src = 'https://placehold.co/600x400?text=Image+Not+Found';
+        img.alt = 'Image not found';
+      };
+      
       // Create info section with link
       const info = document.createElement('div');
       info.className = 'image-info';
@@ -27,7 +47,7 @@ async function loadImages() {
       const link = document.createElement('a');
       link.href = imageUrl;
       link.className = 'image-link';
-      link.textContent = imageUrl;
+      link.textContent = image;
       link.target = '_blank';
       link.rel = 'noopener';
       
@@ -39,7 +59,7 @@ async function loadImages() {
     });
   } catch (error) {
     console.error('Error loading images:', error);
-    gallery.innerHTML = '<p>Error loading images. Please make sure images are placed in the img folder.</p>';
+    gallery.innerHTML = `<p>Error loading images: ${error.message}. Please make sure images are placed in the img folder.</p>`;
   }
 }
 
